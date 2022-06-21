@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from WPODNet_SVM.lib_detection import load_model, detect_lp, im2single
+from threading import Thread
 
 
 # Ham sap xep contour tu trai sang phai
@@ -25,12 +26,12 @@ def fine_tune(lp):
     return newString
 
 
-"""# Load model LP detection
-wpod_net_path = "wpod-net_update1.json"
+# Load model LP detection
+wpod_net_path = "WPODNet_SVM/wpod-net_update1.json"
 wpod_net = load_model(wpod_net_path)
 
 
-
+"""
 Frame = cv2.imread("test/541.jpg")
 
 # Kích thước lớn nhất và nhỏ nhất của 1 chiều ảnh
@@ -100,6 +101,26 @@ def read_lisence(LpImg, digit_w = 30, digit_h = 60):
                 plate_info +=result
 
     return plate_info
+
+def detec_plate(Frame):
+
+    # Kích thước lớn nhất và nhỏ nhất của 1 chiều ảnh
+    Dmax = 500
+    Dmin = 374
+
+    # Lấy tỷ lệ giữa W và H của ảnh và tìm ra chiều nhỏ nhất
+    ratio = float(max(Frame.shape[:2])) / min(Frame.shape[:2])
+    side = int(ratio * Dmin)
+    bound_dim = min(side, Dmax)
+
+    _, LpImg, lp_type = detect_lp(wpod_net, im2single(Frame), bound_dim, lp_threshold=0.9)
+    lisence = "No lisence found"
+    if (len(LpImg)):
+        process_plate = Thread(target=read_lisence, args=(LpImg[0],))
+        lisence = process_plate.start()
+        process_plate.join()
+    print("bien so: ", lisence)
+
 
     """cv2.imshow("Cac contour tim duoc", roi)
     cv2.waitKey()"""
